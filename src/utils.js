@@ -1,5 +1,13 @@
 import { riotApi, regionToCluster } from "./riotApi.js";
+
+const cache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 минут
+
 export async function loadPlayer(playerData) {
+  const cached = cache.get(playerData);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
   // 1. Парсим данные из URL (например: MishaCrazy-RU1-RU)
   const parts = decodeURIComponent(playerData).split("-");
   const regionKey = parts.pop(); // RU
@@ -28,7 +36,7 @@ export async function loadPlayer(playerData) {
   const matchDetails = await Promise.all(
     matchIds.slice(0, 5).map((id) => riotApi.getMatchInfo(id, cluster)),
   );
-  return {
+  const result = {
     account,
     sumData,
     rank,
@@ -38,4 +46,7 @@ export async function loadPlayer(playerData) {
     matches: matchDetails,
     items: itemsResponse.data,
   };
+
+  cache.set(playerData, { data: result, timestamp: Date.now() });
+  return result;
 }
