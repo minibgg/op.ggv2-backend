@@ -2,7 +2,6 @@ import "dotenv/config";
 
 const API_KEY = process.env.RIOT_KEY;
 
-// ИСПРАВЛЕНО: Добавлен полный домен
 const CDRAGON_API =
   "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1";
 
