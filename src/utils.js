@@ -44,7 +44,7 @@ export async function loadPlayer(playerData) {
     champions,
     version,
     matches: matchDetails,
-    items: itemsResponse.items,
+    items: itemsResponse,
   };
 
   cache.set(playerData, { data: result, timestamp: Date.now() });
