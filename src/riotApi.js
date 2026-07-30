@@ -157,6 +157,26 @@ export const riotApi = {
     const res = await fetchWithTimeout(
       `https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/item.json`,
     );
-    return await res.json();
+    const data = await res.json();
+
+    const items = data.data;
+    for (const key in items) {
+      if (items[key].description) {
+        items[key].description = items[key].description
+          .replace(/<mainText>/g, '<span class="item-mainText">')
+          .replace(/<\/mainText>/g, "</span>")
+          .replace(/<stats>/g, "<span>")
+          .replace(/<\/stats>/g, "</span>")
+          .replace(/<br\s*\/?>/g, "<br />")
+          .replace(/<attention>/g, '<span class="item-attention">')
+          .replace(/<\/attention>/g, "</span>")
+          .replace(/<passive>/g, '<span class="item-passive">')
+          .replace(/<\/passive>/g, "</span>")
+          .replace(/<OnHit>/g, '<span class="item-onhit">')
+          .replace(/<\/OnHit>/g, "</span>");
+      }
+    }
+
+    return items;
   },
 };
