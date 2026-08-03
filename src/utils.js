@@ -3,23 +3,28 @@ import { riotApi, regionToCluster } from "./riotApi.js";
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 минут
 
-export async function loadPlayer(playerData) {
-  const cached = cache.get(playerData);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.data;
-  }
-  // 1. Парсим данные из URL (например: MishaCrazy-RU1-RU)
+function parsePlayerData(playerData) {
   const parts = decodeURIComponent(playerData).split("-");
   const regionKey = parts.pop(); // RU
   const tagLine = parts.pop(); // RU1
   const gameName = parts.join("-").replace(/_/g, " "); // MishaCrazy
 
   const { cluster, region: regionUrl } = regionToCluster[regionKey];
+  return { gameName, tagLine, cluster, regionUrl };
+}
 
-  const version = await riotApi.getVersion();
+export async function loadPlayer(playerData) {
+  const cached = cache.get(playerData);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
 
-  // 2. Получаем PUUID и версию игры
-  const account = await riotApi.getPuuidByNameTag(gameName, tagLine, cluster);
+  const { gameName, tagLine, cluster, regionUrl } = parsePlayerData(playerData);
+
+  const [version, account] = await Promise.all([
+    riotApi.getVersion(),
+    riotApi.getPuuidByNameTag(gameName, tagLine, cluster),
+  ]);
 
   // 3. Загружаем всё остальное параллельно
   const [sumData, rank, matchIds, masteries, champions, itemsResponse] =
@@ -49,4 +54,12 @@ export async function loadPlayer(playerData) {
 
   cache.set(playerData, { data: result, timestamp: Date.now() });
   return result;
+}
+
+export async function getLiveGame(playerData) {
+  const { gameName, tagLine, cluster, regionUrl } = parsePlayerData(playerData);
+
+  const account = await riotApi.getPuuidByNameTag(gameName, tagLine, cluster);
+
+  return await riotApi.getLiveGame(account.puuid, regionUrl);
 }

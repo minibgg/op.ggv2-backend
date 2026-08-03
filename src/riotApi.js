@@ -179,4 +179,10 @@ export const riotApi = {
 
     return items;
   },
+  async getLiveGame(region, puuid) {
+    const res = await fetch(
+      `https://${region}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/${puuid}?api_key=${API_KEY}`,
+    );
+    return await res.json();
+  },
 };
